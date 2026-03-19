@@ -9,7 +9,7 @@ spec:
       instance_size_slug: apps-s-1vcpu-2gb # Minimum 2GB required - 1GB causes heap overflow
       git:
         branch: main
-        repo_clone_url: https://github.com/digitalocean-labs/openclaw-appplatform.git
+        repo_clone_url: https://github.com/paraiso23/openclaw-appplatform.git
       envs:
         # Provide your Gradient inference key
         - key: GRADIENT_API_KEY
