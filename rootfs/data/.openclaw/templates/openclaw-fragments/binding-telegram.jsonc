@@ -1,0 +1,21 @@
+// Fragment: Telegram binding for a personal agent
+// One per team member, added during onboarding
+{
+  "channels": {
+    "telegram": {
+      "accounts": [
+        {
+          "id": "personal-{{NOMBRE_SLUG}}",
+          "token": "{{TELEGRAM_BOT_TOKEN}}"
+        }
+      ],
+      "bindings": [
+        {
+          "agent": "personal-{{NOMBRE_SLUG}}",
+          "account": "personal-{{NOMBRE_SLUG}}",
+          "peer": { "id": "{{TELEGRAM_USER_ID}}" }
+        }
+      ]
+    }
+  }
+}

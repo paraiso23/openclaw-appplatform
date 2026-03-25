@@ -1,0 +1,14 @@
+// Fragment: PM agent config
+{
+  "id": "pm",
+  "name": "PM",
+  "default": true,
+  "workspace": "./workspace-pm",
+  "model": "openrouter/google/gemini-3-flash-preview",
+  "heartbeat": {
+    "every": "30m",
+    "target": "slack",
+    "activeHours": { "start": "08:00", "end": "20:00", "timezone": "{{TIMEZONE}}" },
+    "lightContext": true
+  }
+}

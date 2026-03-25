@@ -1,0 +1,14 @@
+// Fragment: Strategy agent config
+// Added to openclaw.json by the Implementor during onboarding
+{
+  "id": "strategy",
+  "name": "Strategy",
+  "workspace": "./workspace-strategy",
+  "model": "openrouter/google/gemini-3-pro",
+  "heartbeat": {
+    "every": "2h",
+    "target": "slack",
+    "activeHours": { "start": "08:00", "end": "20:00", "timezone": "{{TIMEZONE}}" },
+    "lightContext": false
+  }
+}
