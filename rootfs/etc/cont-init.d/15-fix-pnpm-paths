@@ -1,0 +1,64 @@
+#!/command/with-contenv bash
+# Fix pnpm virtual store hash mismatches after Restic restore
+# When the container image updates but old paths are restored from backup,
+# the openclaw binary wrapper references a path that no longer exists.
+# This script detects the mismatch and creates a compatibility symlink.
+source /etc/s6-overlay/lib/env-utils.sh
+
+PNPM_GLOBAL="/home/openclaw/.local/share/pnpm/global/5/.pnpm"
+
+if [ ! -d "$PNPM_GLOBAL" ]; then
+  echo "[fix-pnpm] No pnpm global store at $PNPM_GLOBAL, skipping"
+  exit 0
+fi
+
+# Check if openclaw works already
+if su - openclaw -c "openclaw --version" >/dev/null 2>&1; then
+  echo "[fix-pnpm] openclaw working, no fix needed"
+  exit 0
+fi
+
+echo "[fix-pnpm] openclaw failed — checking for pnpm hash mismatch..."
+
+# Get the MODULE_NOT_FOUND error to extract expected path
+ERROR=$(su - openclaw -c "openclaw --version" 2>&1 | grep "Cannot find module")
+
+if [ -z "$ERROR" ]; then
+  echo "[fix-pnpm] Not a MODULE_NOT_FOUND error, skipping"
+  exit 0
+fi
+
+# Extract the expected package path from the error
+# Error: Cannot find module '/home/openclaw/.../.pnpm/openclaw@VERSION_HASH/node_modules/...'
+EXPECTED_PATH=$(echo "$ERROR" | grep -oP "(?<=')[^']+(?=')" | head -1)
+EXPECTED_PKG=$(echo "$EXPECTED_PATH" | sed "s|$PNPM_GLOBAL/||" | sed "s|/node_modules/.*||")
+
+if [ -z "$EXPECTED_PKG" ]; then
+  echo "[fix-pnpm] Could not extract expected package path from: $ERROR"
+  exit 0
+fi
+
+# Find the canonical (currently installed in this image) openclaw path
+CANONICAL=$(ls "$PNPM_GLOBAL" | grep "^openclaw@" | grep -v "^$(echo "$EXPECTED_PKG" | head -c 50)" | sort | tail -1)
+
+if [ -z "$CANONICAL" ]; then
+  echo "[fix-pnpm] No alternative openclaw path found in $PNPM_GLOBAL"
+  ls "$PNPM_GLOBAL" | grep "^openclaw@" || echo "(none)"
+  exit 0
+fi
+
+echo "[fix-pnpm] Hash mismatch detected:"
+echo "  Backup path: $EXPECTED_PKG"
+echo "  Image path:  $CANONICAL"
+echo "[fix-pnpm] Creating symlink..."
+
+ln -sfn "$PNPM_GLOBAL/$CANONICAL" "$PNPM_GLOBAL/$EXPECTED_PKG"
+
+# Verify fix
+if su - openclaw -c "openclaw --version" >/dev/null 2>&1; then
+  VERSION=$(su - openclaw -c "openclaw --version" 2>&1 | head -1)
+  echo "[fix-pnpm] Fixed! $VERSION"
+else
+  echo "[fix-pnpm] Symlink created but openclaw still failing:"
+  su - openclaw -c "openclaw --version" 2>&1 | head -5
+fi
