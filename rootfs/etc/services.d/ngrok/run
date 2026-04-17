@@ -2,6 +2,7 @@
 # ngrok tunnel (enabled via ENABLE_NGROK=true)
 source /etc/s6-overlay/lib/env-utils.sh
 source_env_prefix NGROK_
+source_env_prefix ENABLE_
 
 if [ "${ENABLE_NGROK:-false}" != "true" ]; then
   echo "[ngrok] Disabled (set ENABLE_NGROK=true to enable)"
